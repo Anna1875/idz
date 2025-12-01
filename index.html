@@ -1,0 +1,416 @@
+import React, { useState, useEffect } from 'react';
+import { Camera, Play, Pause, RotateCw, Info, BookOpen } from 'lucide-react';
+
+const FunctionsARApp = () => {
+  const [currentView, setCurrentView] = useState('menu');
+  const [selectedFunctions, setSelectedFunctions] = useState([]);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [rotationSpeed, setRotationSpeed] = useState(1);
+  const [showFormulas, setShowFormulas] = useState(true);
+  const [compareMode, setCompareMode] = useState(false);
+
+  const functions = [
+    {
+      id: 'sin',
+      name: 'Синус',
+      formula: 'f(x, y) = sin(√(x² + y²))',
+      color: '#ff6b6b',
+      description: 'Тригонометрична функція з радіальною симетрією',
+      domain: 'ℝ²',
+      range: '[-1, 1]'
+    },
+    {
+      id: 'paraboloid',
+      name: 'Параболоїд',
+      formula: 'f(x, y) = x² + y²',
+      color: '#4ecdc4',
+      description: 'Поверхня другого порядку',
+      domain: 'ℝ²',
+      range: '[0, +∞)'
+    },
+    {
+      id: 'saddle',
+      name: 'Сідло',
+      formula: 'f(x, y) = x² - y²',
+      color: '#45b7d1',
+      description: 'Гіперболічний параболоїд',
+      domain: 'ℝ²',
+      range: 'ℝ'
+    },
+    {
+      id: 'cone',
+      name: 'Конус',
+      formula: 'f(x, y) = √(x² + y²)',
+      color: '#f9ca24',
+      description: 'Конічна поверхня',
+      domain: 'ℝ²',
+      range: '[0, +∞)'
+    },
+    {
+      id: 'waves',
+      name: 'Хвилі',
+      formula: 'f(x, y) = sin(x) · cos(y)',
+      color: '#a29bfe',
+      description: 'Добуток тригонометричних функцій',
+      domain: 'ℝ²',
+      range: '[-1, 1]'
+    },
+    {
+      id: 'gaussian',
+      name: 'Гаусіан',
+      formula: 'f(x, y) = e^(-(x² + y²))',
+      color: '#fd79a8',
+      description: 'Функція Гауса, нормальний розподіл',
+      domain: 'ℝ²',
+      range: '(0, 1]'
+    }
+  ];
+
+  const toggleFunction = (funcId) => {
+    if (compareMode) {
+      if (selectedFunctions.includes(funcId)) {
+        setSelectedFunctions(selectedFunctions.filter(id => id !== funcId));
+      } else if (selectedFunctions.length < 3) {
+        setSelectedFunctions([...selectedFunctions, funcId]);
+      }
+    } else {
+      setSelectedFunctions([funcId]);
+    }
+  };
+
+  const MenuView = () => (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">📐 AR Графіки Функцій</h1>
+          <p className="text-purple-200">Інтерактивне вивчення тривимірних функцій у реальному просторі</p>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-white">Оберіть функції</h2>
+            <label className="flex items-center gap-2 text-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={compareMode}
+                onChange={(e) => {
+                  setCompareMode(e.target.checked);
+                  if (!e.target.checked && selectedFunctions.length > 1) {
+                    setSelectedFunctions([selectedFunctions[0]]);
+                  }
+                }}
+                className="w-5 h-5"
+              />
+              <span>Режим порівняння (до 3-х)</span>
+            </label>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {functions.map((func) => {
+              const isSelected = selectedFunctions.includes(func.id);
+              const canSelect = compareMode ? selectedFunctions.length < 3 || isSelected : true;
+
+              return (
+                <div
+                  key={func.id}
+                  onClick={() => canSelect && toggleFunction(func.id)}
+                  className={`p-4 rounded-lg cursor-pointer transition-all transform hover:scale-105 ${
+                    isSelected
+                      ? 'bg-white/30 ring-4 ring-white'
+                      : canSelect
+                      ? 'bg-white/10 hover:bg-white/20'
+                      : 'bg-gray-500/20 opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div
+                      className="w-6 h-6 rounded-full"
+                      style={{ backgroundColor: func.color }}
+                    />
+                    <h3 className="text-xl font-bold text-white">{func.name}</h3>
+                  </div>
+                  <p className="text-lg font-mono text-purple-200 mb-2">{func.formula}</p>
+                  <p className="text-sm text-purple-300">{func.description}</p>
+                  <div className="mt-2 text-xs text-purple-200">
+                    <div>Область визначення: {func.domain}</div>
+                    <div>Область значень: {func.range}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={() => selectedFunctions.length > 0 && setCurrentView('ar')}
+            disabled={selectedFunctions.length === 0}
+            className={`px-8 py-4 rounded-xl font-bold text-lg transition-all flex items-center gap-2 ${
+              selectedFunctions.length > 0
+                ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-2xl transform hover:scale-105'
+                : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+            }`}
+          >
+            <Camera className="w-6 h-6" />
+            Запустити AR
+          </button>
+          
+          <button
+            onClick={() => setCurrentView('info')}
+            className="px-8 py-4 bg-white/20 hover:bg-white/30 text-white rounded-xl font-bold text-lg transition-all flex items-center gap-2"
+          >
+            <Info className="w-6 h-6" />
+            Інструкції
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ARView = () => {
+    const selectedFuncs = functions.filter(f => selectedFunctions.includes(f.id));
+
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-4 z-10">
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => setCurrentView('menu')}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg"
+            >
+              ← Назад
+            </button>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold">AR Симуляція</h2>
+              <p className="text-sm text-gray-300">
+                {selectedFuncs.map(f => f.name).join(' + ')}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowFormulas(!showFormulas)}
+              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg"
+            >
+              {showFormulas ? '🔽' : '🔼'} Формули
+            </button>
+          </div>
+        </div>
+
+        <div className="relative h-screen flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800">
+            <div className="grid grid-cols-10 grid-rows-10 h-full opacity-20">
+              {[...Array(100)].map((_, i) => (
+                <div key={i} className="border border-blue-500/30" />
+              ))}
+            </div>
+          </div>
+
+          <div className="relative w-full max-w-4xl aspect-video bg-gray-800/50 rounded-xl overflow-hidden">
+            <div className="absolute top-4 left-4 bg-green-500 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              Камера активна
+            </div>
+
+            <div className="flex items-center justify-center h-full gap-8 p-8">
+              {selectedFuncs.map((func, idx) => (
+                <div
+                  key={func.id}
+                  className="relative"
+                  style={{
+                    transform: isSimulating ? `rotateY(${Date.now() / (1000 / rotationSpeed)}deg)` : 'none',
+                    transition: 'transform 0.1s linear'
+                  }}
+                >
+                  <div className="text-center mb-4">
+                    <div
+                      className="w-48 h-48 mx-auto rounded-lg shadow-2xl"
+                      style={{
+                        background: `linear-gradient(135deg, ${func.color}dd, ${func.color}66)`,
+                        border: `4px solid ${func.color}`,
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <div className="absolute inset-0 opacity-30">
+                        {[...Array(8)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="absolute w-full h-px bg-white"
+                            style={{ top: `${(i + 1) * 12.5}%` }}
+                          />
+                        ))}
+                        {[...Array(8)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="absolute h-full w-px bg-white"
+                            style={{ left: `${(i + 1) * 12.5}%` }}
+                          />
+                        ))}
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-6xl font-bold opacity-50">3D</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {showFormulas && (
+                    <div className="bg-black/70 backdrop-blur-sm rounded-lg p-4 text-center">
+                      <h3 className="text-xl font-bold mb-2" style={{ color: func.color }}>
+                        {func.name}
+                      </h3>
+                      <p className="font-mono text-sm mb-2">{func.formula}</p>
+                      <p className="text-xs text-gray-400">{func.description}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-blue-500/30 backdrop-blur-sm px-6 py-2 rounded-full text-sm">
+              📍 Маркер: Поверхня столу
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between gap-4">
+              <button
+                onClick={() => setIsSimulating(!isSimulating)}
+                className={`flex-1 py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 ${
+                  isSimulating
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : 'bg-green-500 hover:bg-green-600'
+                }`}
+              >
+                {isSimulating ? (
+                  <>
+                    <Pause className="w-5 h-5" /> Зупинити обертання
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" /> Почати обертання
+                  </>
+                )}
+              </button>
+
+              <div className="flex-1 bg-white/10 backdrop-blur-sm rounded-xl p-3">
+                <label className="text-sm mb-2 block">Швидкість обертання: {rotationSpeed}x</label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="3"
+                  step="0.5"
+                  value={rotationSpeed}
+                  onChange={(e) => setRotationSpeed(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <button
+                onClick={() => setIsSimulating(false)}
+                className="px-6 py-3 bg-purple-500 hover:bg-purple-600 rounded-xl font-bold flex items-center gap-2"
+              >
+                <RotateCw className="w-5 h-5" /> Скинути
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const InfoView = () => (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 p-6">
+      <div className="max-w-4xl mx-auto">
+        <button
+          onClick={() => setCurrentView('menu')}
+          className="mb-6 px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl font-bold"
+        >
+          ← Назад до меню
+        </button>
+
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 text-white">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="w-8 h-8" />
+            <h1 className="text-3xl font-bold">Інструкція з використання</h1>
+          </div>
+
+          <div className="space-y-6">
+            <section>
+              <h2 className="text-2xl font-bold mb-3 text-yellow-300">📱 Функціональність</h2>
+              <ul className="space-y-2 ml-6 list-disc">
+                <li>Тривимірні графіки з'являються над маркерами на столі</li>
+                <li>Інтерактивна зміна параметрів обертання</li>
+                <li>Порівняння кількох функцій одночасно (до 3-х)</li>
+                <li>Картки з формулами та описами функцій</li>
+                <li>Розпізнавання рукописних математичних виразів (опціонально)</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold mb-3 text-green-300">🎮 Як користуватися</h2>
+              <ol className="space-y-2 ml-6 list-decimal">
+                <li>Оберіть одну або декілька функцій з головного меню</li>
+                <li>Увімкніть режим порівняння для вибору до 3-х функцій</li>
+                <li>Натисніть "Запустити AR" для активації камери</li>
+                <li>Наведіть камеру на поверхню столу</li>
+                <li>Графіки з'являться над маркером</li>
+                <li>Використовуйте кнопки для керування обертанням</li>
+                <li>Змінюйте швидкість обертання повзунком</li>
+              </ol>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold mb-3 text-purple-300">⚙️ Технології</h2>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="bg-white/10 p-3 rounded-lg">
+                  <strong>MindAR:</strong> Відстеження маркерів
+                </div>
+                <div className="bg-white/10 p-3 rounded-lg">
+                  <strong>Three.js:</strong> 3D рендеринг
+                </div>
+                <div className="bg-white/10 p-3 rounded-lg">
+                  <strong>WebGL:</strong> Графічний рушій
+                </div>
+                <div className="bg-white/10 p-3 rounded-lg">
+                  <strong>React:</strong> Інтерфейс користувача
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold mb-3 text-red-300">📋 Системні вимоги</h2>
+              <ul className="space-y-2 ml-6 list-disc">
+                <li>Мобільний пристрій з підтримкою WebGL</li>
+                <li>Сучасний браузер (Chrome, Firefox, Safari)</li>
+                <li>Камера з дозволом мінімум 720p</li>
+                <li>Стабільне з'єднання з інтернетом</li>
+                <li>Роздрукований маркер на поверхні столу</li>
+              </ul>
+            </section>
+
+            <section className="bg-yellow-500/20 p-4 rounded-lg">
+              <h2 className="text-xl font-bold mb-2">💡 Поради</h2>
+              <ul className="space-y-1 ml-6 list-disc text-sm">
+                <li>Забезпечте гарне освітлення для кращого розпізнавання</li>
+                <li>Тримайте камеру стабільно над маркером</li>
+                <li>Використовуйте режим порівняння для аналізу різниці між функціями</li>
+                <li>Експериментуйте з різними швидкостями обертання</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      {currentView === 'menu' && <MenuView />}
+      {currentView === 'ar' && <ARView />}
+      {currentView === 'info' && <InfoView />}
+    </div>
+  );
+};
+
+export default FunctionsARApp;
