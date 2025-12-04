@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Финальный тест - все системы</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        
+        #ui-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            max-width: 350px;
+            font-size: 13px;
+        }
+        
+        .marker-status {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: #333;
+        }
+        
+        .marker-status.active {
+            background: #2d5a27;
+        }
+        
+        .test-results {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #444;
+        }
+        
+        .highlight {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-panel">
+        <h3>🧪 Финальный тест</h3>
+        
+        <div class="marker-status" id="status-sin">
+            <span>Маркер sin (Index 0):</span>
+            <span id="text-sin">❌</span>
+        </div>
+        <div class="marker-status" id="status-paraboloid">
+            <span>Маркер paraboloid (Index 1):</span>
+            <span id="text-paraboloid">❌</span>
+        </div>
+        <div class="marker-status" id="status-saddle">
+            <span>Маркер saddle (Index 2):</span>
+            <span id="text-saddle">❌</span>
+        </div>
+        <div class="marker-status" id="status-waves">
+            <span>Маркер waves (Index 3):</span>
+            <span id="text-waves">❌</span>
+        </div>
+        <div class="marker-status" id="status-cone">
+            <span>Маркер cone (Index 4):</span>
+            <span id="text-cone">❌</span>
+        </div>
+        <div class="marker-status" id="status-gaussian">
+            <span>Маркер gaussian (Index 5):</span>
+            <span id="text-gaussian">❌</span>
+        </div>
+        
+        
+        <div style="margin-top: 15px; font-size: 11px; color: #aaa;">
+            <div>Видимых маркеров: <span id="visible-count">0</span>/4</div>
+            <div>Время теста: <span id="test-time">0</span>с</div>
+        </div>
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 2;"
+             vr-mode-ui="enabled: false"
+             device-orientation-permission-ui="enabled: false"
+             final-test-controller>
+        
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        
+        <a-entity id="sin" mindar-image-target="targetIndex: 0">
+            <a-sphere color="#e74c3c" radius="0.12" position="0 0.15 0"></a-sphere>
+            <a-text value="sin" position="0 0.4 0" align="center" color="#e74c3c" scale="2.5 2.5 2.5"></a-text>
+        </a-entity>
+        
+        <a-entity id="paraboloid" mindar-image-target="targetIndex: 1">
+            <a-sphere color="#3498db" radius="0.12" position="0 0.15 0"></a-sphere>
+            <a-text value="paraboloid" position="0 0.4 0" align="center" color="#3498db" scale="2.5 2.5 2.5"></a-text>
+        </a-entity>
+        
+        <a-entity id="saddle" mindar-image-target="targetIndex: 2">
+            <a-sphere color="#9b59b6" radius="0.12" position="0 0.15 0"></a-sphere>
+            <a-text value="saddle" position="0 0.4 0" align="center" color="#9b59b6" scale="2.5 2.5 2.5"></a-text>
+        </a-entity>
+        
+        <a-entity id="waves" mindar-image-target="targetIndex: 3">
+            <a-sphere color="#f1c40f" radius="0.12" position="0 0.15 0"></a-sphere>
+            <a-text value="waves" position="0 0.4 0" align="center" color="#f1c40f" scale="2.5 2.5 2.5"></a-text>
+        </a-entity>
+
+        <a-entity id="cone" mindar-image-target="targetIndex: 3">
+            <a-sphere color="#f1c40f" radius="0.12" position="0 0.15 0"></a-sphere>
+            <a-text value="cone" position="0 0.4 0" align="center" color="#f1c40f" scale="2.5 2.5 2.5"></a-text>
+        </a-entity>
+
+        <a-entity id="gaussian" mindar-image-target="targetIndex: 3">
+            <a-sphere color="#f1c40f" radius="0.12" position="0 0.15 0"></a-sphere>
+            <a-text value="gaussian" position="0 0.4 0" align="center" color="#f1c40f" scale="2.5 2.5 2.5"></a-text>
+        </a-entity>
+        
+    </a-scene>
+
+    <script>
+        AFRAME.registerComponent('final-test-controller', {
+            init: function() {
+                this.markers = {
+                    'sin': document.getElementById('sin'),
+                    'paraboloid': document.getElementById('paraboloid'),
+                    'saddle': document.getElementById('saddle'),
+                    'waves': document.getElementById('waves'),
+                    'cone': document.getElementById('cone'),
+                    'gaussian': document.getElementById('gaussian')
+                };
+                
+                this.markerVisible = {
+                    'a': false, 'b': false, 'c': false, 'd': false
+                };
+                
+                this.testResults = {
+                    singleMarkers: new Set(),
+                    maxSimultaneous: 0,
+                    geometryWorking: false
+                };
+                
+                this.startTime = Date.now();
+                this.setupMarkerEvents();
+                this.startTestTimer();
+                
+                console.log('🧪 Final test controller initialized');
+            },
+            
+            setupMarkerEvents: function() {
+                Object.keys(this.markers).forEach(id => {
+                    const marker = this.markers[id];
+                    
+                    marker.addEventListener("targetFound", () => {
+                        this.markerVisible[id] = true;
+                        this.testResults.singleMarkers.add(id);
+                        this.updateUI();
+                        console.log(`✅ Final test: Marker ${id.toUpperCase()} found`);
+                    });
+                    
+                    marker.addEventListener("targetLost", () => {
+                        this.markerVisible[id] = false;
+                        this.updateUI();
+                        console.log(`❌ Final test: Marker ${id.toUpperCase()} lost`);
+                    });
+                });
+            },
+            
+            updateUI: function() {
+                // Обновление статуса маркеров
+                Object.keys(this.markerVisible).forEach(id => {
+                    const statusDiv = document.getElementById(`status-${id}`);
+                    const textSpan = document.getElementById(`text-${id}`);
+                    
+                    if (this.markerVisible[id]) {
+                        statusDiv.classList.add('active');
+                        textSpan.textContent = '✅ Активен';
+                    } else {
+                        statusDiv.classList.remove('active');
+                        textSpan.textContent = '❌ Неактивен';
+                    }
+                });
+                
+                // Подсчет видимых маркеров
+                const visibleCount = Object.values(this.markerVisible).filter(v => v).length;
+                document.getElementById('visible-count').textContent = visibleCount;
+                
+                // Обновление максимального количества одновременных маркеров
+                if (visibleCount > this.testResults.maxSimultaneous) {
+                    this.testResults.maxSimultaneous = visibleCount;
+                }
+                
+                // Обновление результатов тестов
+                this.updateTestResults();
+            },
+            
+            updateTestResults: function() {
+                // Тест одиночных маркеров
+                const singleCount = this.testResults.singleMarkers.size;
+                let singleStatus = '';
+                if (singleCount === 0) singleStatus = '❌ Нет';
+                else if (singleCount < 4) singleStatus = `🟡 ${singleCount}/4`;
+                else singleStatus = '✅ Все работают';
+                
+                document.getElementById('single-test').textContent = singleStatus;
+            },
+            
+            startTestTimer: function() {
+                setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    document.getElementById('test-time').textContent = elapsed;
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Диагностика всех маркеров</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+        #debug {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 300px;
+        }
+        
+        .marker-test {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #444;
+            border-radius: 3px;
+        }
+        
+        .found { background: #2d5a27; }
+        .lost { background: #5a2727; }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 2px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div id="debug">
+        <h3>🔍 Диагностика маркеров</h3>
+        <div>Статус: <span id="status">Инициализация...</span></div>
+        <hr>
+        
+        <div class="marker-test" id="result-0">
+            <strong>Index 0:</strong> <span id="status-0">Ожидание...</span><br>
+            <small>Должен быть: Маркер sin</small>
+        </div>
+        
+        <div class="marker-test" id="result-1">
+            <strong>Index 1:</strong> <span id="status-1">Ожидание...</span><br>
+            <small>Должен быть: Маркер paraboloid</small>
+        </div>
+        
+        <div class="marker-test" id="result-2">
+            <strong>Index 2:</strong> <span id="status-2">Ожидание...</span><br>
+            <small>Должен быть: Маркер saddle</small>
+        </div>
+        
+        <div class="marker-test" id="result-3">
+            <strong>Index 3:</strong> <span id="status-3">Ожидание...</span><br>
+            <small>Должен быть: Маркер waves</small>
+        </div>
+        <div class="marker-test" id="result-4">
+            <strong>Index 4:</strong> <span id="status-4">Ожидание...</span><br>
+            <small>Должен быть: Маркер cone</small>
+        </div>
+
+        <div class="marker-test" id="result-5">
+            <strong>Index 5:</strong> <span id="status-5">Ожидание...</span><br>
+            <small>Должен быть: Маркер gaussian</small>
+        </div>
+        
+
+        <hr>
+        <button onclick="clearLog()">Очистить лог</button>
+        <div id="log" style="margin-top: 10px; font-size: 10px;"></div>
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 4;"
+             vr-mode-ui="enabled: false"
+             device-orientation-permission-ui="enabled: false">
+        
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        
+        <!-- Все 4 маркера одновременно с разными цветами -->
+        <a-entity id="sin" mindar-image-target="targetIndex: 0">
+            <a-sphere color="#e74c3c" radius="0.15" position="0 0.2 0"></a-sphere>
+            <a-text value="INDEX 0" position="0 0.5 0" align="center" color="#e74c3c" scale="2 2 2"></a-text>
+        </a-entity>
+        
+        <a-entity id="paraboloid" mindar-image-target="targetIndex: 1">
+            <a-sphere color="#3498db" radius="0.15" position="0 0.2 0"></a-sphere>
+            <a-text value="INDEX 1" position="0 0.5 0" align="center" color="#3498db" scale="2 2 2"></a-text>
+        </a-entity>
+        
+        <a-entity id="saddle" mindar-image-target="targetIndex: 2">
+            <a-sphere color="#9b59b6" radius="0.15" position="0 0.2 0"></a-sphere>
+            <a-text value="INDEX 2" position="0 0.5 0" align="center" color="#9b59b6" scale="2 2 2"></a-text>
+        </a-entity>
+        
+        <a-entity id="waves" mindar-image-target="targetIndex: 3">
+            <a-sphere color="#f1c40f" radius="0.15" position="0 0.2 0"></a-sphere>
+            <a-text value="INDEX 3" position="0 0.5 0" align="center" color="#f1c40f" scale="2 2 2"></a-text>
+        </a-entity>
+
+        <a-entity id="cone" mindar-image-target="targetIndex: 4">
+            <a-sphere color="#f1c40f" radius="0.15" position="0 0.2 0"></a-sphere>
+            <a-text value="INDEX 4" position="0 0.5 0" align="center" color="#f1c40f" scale="2 2 2"></a-text>
+        </a-entity>
+
+        <a-entity id="gaussian" mindar-image-target="targetIndex: 5">
+            <a-sphere color="#f1c40f" radius="0.15" position="0 0.2 0"></a-sphere>
+            <a-text value="INDEX 5" position="0 0.5 0" align="center" color="#f1c40f" scale="2 2 2"></a-text>
+        </a-entity>
+        
+    </a-scene>
+
+    <script>
+        let logCount = 0;
+        
+        function addLog(message) {
+            const logDiv = document.getElementById('log');
+            logCount++;
+            logDiv.innerHTML += `${logCount}: ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${logCount}] ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            logCount = 0;
+        }
+        
+        // Функция для обновления статуса маркера
+        function updateMarkerStatus(index, found) {
+            const statusSpan = document.getElementById(`status-${index}`);
+            const resultDiv = document.getElementById(`result-${index}`);
+            
+            if (found) {
+                statusSpan.textContent = 'НАЙДЕН! ✅';
+                statusSpan.style.color = '#4CAF50';
+                resultDiv.classList.add('found');
+                resultDiv.classList.remove('lost');
+            } else {
+                statusSpan.textContent = 'Потерян ❌';
+                statusSpan.style.color = '#f44336';
+                resultDiv.classList.add('lost');
+                resultDiv.classList.remove('found');
+            }
+        }
+        
+        // Настройка обработчиков для всех маркеров
+        for (let i = 0; i < 4; i++) {
+            const marker = document.getElementById(`marker-${i}`);
+            
+            marker.addEventListener("targetFound", () => {
+                updateMarkerStatus(i, true);
+                addLog(`✅ Маркер с INDEX ${i} НАЙДЕН!`);
+            });
+            
+            marker.addEventListener("targetLost", () => {
+                updateMarkerStatus(i, false);
+                addLog(`❌ Маркер с INDEX ${i} потерян`);
+            });
+        }
+        
+        // Проверка инициализации
+        setTimeout(() => {
+            document.getElementById('status').textContent = 'Готов к тестированию';
+            addLog('🚀 Система готова. Поднесите маркеры к камере.');
+        }, 2000);
+    </script>
+</body>
+</html>
