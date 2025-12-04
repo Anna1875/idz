@@ -7,7 +7,7 @@
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
   
-  <style>
+    <style>
     * { box-sizing: border-box; }
     body { 
       margin: 0; 
@@ -19,9 +19,24 @@
     .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
     .text-center { text-align: center; }
     .mb-2 { margin-bottom: 8px; }
+    .mb-3 { margin-bottom: 12px; }
     .mb-4 { margin-bottom: 16px; }
     .mb-6 { margin-bottom: 24px; }
     .mb-8 { margin-bottom: 32px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-8 { margin-top: 32px; }
+    .p-2 { padding: 8px; }
+    .p-3 { padding: 12px; }
+    .p-4 { padding: 16px; }
+    .p-6 { padding: 24px; }
+    .px-4 { padding-left: 16px; padding-right: 16px; }
+    .px-6 { padding-left: 24px; padding-right: 24px; }
+    .px-8 { padding-left: 32px; padding-right: 32px; }
+    .py-2 { padding-top: 8px; padding-bottom: 8px; }
+    .py-3 { padding-top: 12px; padding-bottom: 12px; }
+    .py-4 { padding-top: 16px; padding-bottom: 16px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
     .gap-4 { gap: 16px; }
     
     .card {
@@ -51,7 +66,14 @@
     .grid {
       display: grid;
       gap: 16px;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    
+    @media (min-width: 768px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    
+    @media (min-width: 1024px) {
+      .grid { grid-template-columns: repeat(3, 1fr); }
     }
     
     .function-card {
@@ -76,6 +98,12 @@
     
     .function-card.available:hover {
       background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .function-card.disabled {
+      background: rgba(107, 114, 128, 0.2);
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     
     .color-dot {
@@ -141,6 +169,10 @@
       background: linear-gradient(to right, #4ade80, #3b82f6);
     }
     
+    .btn-secondary {
+      background: linear-gradient(to right, #c084fc, #ec4899);
+    }
+    
     .btn:disabled {
       background: #6b7280;
       color: #d1d5db;
@@ -174,6 +206,20 @@
     
     .btn-green:hover {
       background: #16a34a;
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      cursor: pointer;
+    }
+    
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
     }
     
     .info-box {
