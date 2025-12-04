@@ -421,53 +421,223 @@
 <body>
   <div id="menu-view"></div>
   <div id="ar-container" class="hidden"></div>
-  <div id="ar-ui" class="hidden"></div>  
-    <!-- A-Frame Scene -->
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 2;"
-             vr-mode-ui="enabled: false"
-             device-orientation-permission-ui="enabled: false"
-             quadrilateral-calculator>
-        
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        
-        <!-- Маркер sin (targetIndex: 0) -->
-        <a-entity id="sin-marker" mindar-image-target="targetIndex: 0">
-            <a-sphere color="#e74c3c" radius="0.1" position="0 0.1 0"></a-sphere>
-            <a-text value="sin" position="0 0.3 0" align="center" color="#e74c3c" scale="2 2 2"></a-text>
-        </a-entity>
-        
-        <!-- Маркер paraboloid (targetIndex: 1) -->
-        <a-entity id="paraboloid-marker" mindar-image-target="targetIndex: 1">
-            <a-sphere color="#3498db" radius="0.1" position="0 0.1 0"></a-sphere>
-            <a-text value="paraboloid-marker" position="0 0.3 0" align="center" color="#3498db" scale="2 2 2"></a-text>
-        </a-entity>
-        
-        <!-- Маркер saddle (targetIndex: 2) -->
-        <a-entity id="saddle-marker" mindar-image-target="targetIndex: 2">
-            <a-sphere color="#9b59b6" radius="0.1" position="0 0.1 0"></a-sphere>
-            <a-text value="saddle" position="0 0.3 0" align="center" color="#9b59b6" scale="2 2 2"></a-text>
-        </a-entity>
-        
-        <!-- Маркер waves (targetIndex: 3) -->
-        <a-entity id="waves-marker" mindar-image-target="targetIndex: 3">
-            <a-sphere color="#f1c40f" radius="0.1" position="0 0.1 0"></a-sphere>
-            <a-text value="waves" position="0 0.3 0" align="center" color="#f1c40f" scale="2 2 2"></a-text>
-        </a-entity>
+  <div id="ar-ui" class="hidden"></div>
 
-        <!-- Маркер cone (targetIndex: 4) -->
-        <a-entity id="cone-marker" mindar-image-target="targetIndex: 3">
-            <a-sphere color="#f1c40f" radius="0.1" position="0 0.1 0"></a-sphere>
-            <a-text value="cone" position="0 0.3 0" align="center" color="#f1c40f" scale="2 2 2"></a-text>
-        </a-entity>
-
-        <!-- Маркер gaussian (targetIndex: 5) -->
-        <a-entity id="gaussian-marker" mindar-image-target="targetIndex: 3">
-            <a-sphere color="#f1c40f" radius="0.1" position="0 0.1 0"></a-sphere>
-            <a-text value="gaussian" position="0 0.3 0" align="center" color="#f1c40f" scale="2 2 2"></a-text>
-        </a-entity>
-        
-    </a-scene>
   <script>
+    AFRAME.registerComponent('parametric-surface', {
+      schema: {
+        funcType: { type: 'string', default: 'sin' },
+        color: { type: 'color', default: '#ff6b6b' },
+        coefA: { type: 'number', default: 1 },
+        coefB: { type: 'number', default: 1 },
+        coefC: { type: 'number', default: 1 }
+      },
+
+      init: function () {
+        this.createMesh();
+      },
+
+      update: function(oldData) {
+        if (oldData.coefA !== this.data.coefA || 
+            oldData.coefB !== this.data.coefB || 
+            oldData.coefC !== this.data.coefC ||
+            oldData.funcType !== this.data.funcType ||
+            oldData.color !== this.data.color) {
+          this.createMesh();
+        }
+      },
+
+      createMesh: function() {
+        const funcType = this.data.funcType;
+        const color = this.data.color;
+        const a = this.data.coefA;
+        const b = this.data.coefB;
+        const c = this.data.coefC;
+        
+        let calculateFunc;
+        switch(funcType) {
+          case 'sin': 
+            calculateFunc = (x, y) => a * Math.sin(b * Math.sqrt(x*x + y*y)) + c; 
+            break;
+          case 'paraboloid': 
+            calculateFunc = (x, y) => a * (b * x*x + c * y*y) * 0.2; 
+            break;
+          case 'saddle': 
+            calculateFunc = (x, y) => a * (b * x*x - c * y*y) * 0.2; 
+            break;
+          case 'cone': 
+            calculateFunc = (x, y) => {
+            const r = Math.sqrt(x*x + y*y);
+            return a * Math.sqrt((b*x*x + c*y*y) / (r*r || 1));
+            };
+            break;
+          case 'waves': 
+            calculateFunc = (x, y) => a * (Math.sin(b * x) * Math.cos(c * y)); 
+            break;
+          case 'gaussian': 
+            const sigma = 1.5;
+            calculateFunc = (x, y) => a * Math.exp(-((b * x*x + c * y*y) / (2 * sigma * sigma))); 
+            break;
+          default: 
+            calculateFunc = (x, y) => a * Math.sin(b * Math.sqrt(x*x + y*y)) + c;
+        }
+
+        const segments = 40;
+        const size = 1.5;
+        const geometry = new THREE.BufferGeometry();
+        const vertices = [];
+        const indices = [];
+        const colors = [];
+        const hexColor = new THREE.Color(color);
+
+        for (let i = 0; i <= segments; i++) {
+          for (let j = 0; j <= segments; j++) {
+            const x = (i / segments - 0.5) * size;
+            const y = (j / segments - 0.5) * size;
+            const z = calculateFunc(x * 3, y * 3);
+            
+            vertices.push(x, z * 0.5, y);
+            
+            const intensity = Math.abs(z) * 0.5 + 0.5;
+            colors.push(
+              hexColor.r * intensity,
+              hexColor.g * intensity,
+              hexColor.b * intensity
+            );
+          }
+        }
+
+        for (let i = 0; i < segments; i++) {
+          for (let j = 0; j < segments; j++) {
+            const a = i * (segments + 1) + j;
+            const b = a + segments + 1;
+            indices.push(a, b, a + 1);
+            indices.push(b, b + 1, a + 1);
+          }
+        }
+
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+
+        const material = new THREE.MeshPhongMaterial({
+          vertexColors: true,
+          side: THREE.DoubleSide,
+          shininess: 60,
+          transparent: true,
+          opacity: 0.85
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        if (this.mesh) {
+          this.el.removeObject3D('mesh');
+        }
+        
+        this.el.setObject3D('mesh', mesh);
+        this.mesh = mesh;
+      },
+
+      tick: function(time, timeDelta) {
+        if (this.mesh && window.arState && window.arState.isSimulating) {
+          this.mesh.rotation.z += window.arState.rotationSpeed * 0.01;
+        }
+      }
+    });
+    AFRAME.registerComponent('graph-2d', {
+        schema: {
+            funcType: { type: 'string', default: 'linear' },
+            color: { type: 'color', default: '#00d2ff' },
+            coefA: { type: 'number', default: 1 },
+            coefB: { type: 'number', default: 0 },
+            coefC: { type: 'number', default: 0 }
+        },
+
+        init: function () {
+            this.createGraph();
+        },
+
+        update: function(oldData) {
+        if (oldData.coefA !== this.data.coefA || 
+            oldData.coefB !== this.data.coefB || 
+            oldData.coefC !== this.data.coefC ||
+            oldData.funcType !== this.data.funcType ||
+            oldData.color !== this.data.color) {
+                this.createGraph();
+            }
+        },
+
+        createGraph: function() {
+            const funcType = this.data.funcType;
+            const color = this.data.color;
+            const a = this.data.coefA;
+            const b = this.data.coefB;
+            const c = this.data.coefC;
+    
+            let calculateFunc;
+            switch(funcType) {
+            case 'linear': 
+                calculateFunc = (x) => a * x + b;
+            break;
+            case 'quadratic': 
+                calculateFunc = (x) => a * x * x + b * x + c;
+            break;
+            default: 
+            calculateFunc = (x) => a * x + b;
+            }
+
+            const points = [];
+            const segments = 100;
+            const range = 3;
+    
+            for (let i = 0; i <= segments; i++) {
+                const x = (i / segments - 0.5) * range * 2;
+                const y = calculateFunc(x);
+                points.push(new THREE.Vector3(x * 0.3, y * 0.3, 0));
+            }
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ 
+                color: new THREE.Color(color),
+                linewidth: 3
+            });
+
+            const line = new THREE.Line(geometry, material);
+    
+            // Додаємо осі координат
+            const axesGroup = new THREE.Group();
+    
+            // Вісь X
+            const xAxisGeom = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-1, 0, 0),
+                new THREE.Vector3(1, 0, 0)
+            ]);
+            const xAxis = new THREE.Line(xAxisGeom, new THREE.LineBasicMaterial({ color: 0xffffff }));
+            axesGroup.add(xAxis);
+    
+            // Вісь Y
+            const yAxisGeom = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, -1, 0),
+                new THREE.Vector3(0, 1, 0)
+            ]);
+            const yAxis = new THREE.Line(yAxisGeom, new THREE.LineBasicMaterial({ color: 0xffffff }));
+            axesGroup.add(yAxis);
+    
+            const mainGroup = new THREE.Group();
+            mainGroup.add(line);
+            mainGroup.add(axesGroup);
+    
+            if (this.mesh) {
+                this.el.removeObject3D('mesh');
+            }
+    
+            this.el.setObject3D('mesh', mainGroup);
+            this.mesh = mainGroup;
+        }
+    });
+
+    
     const functions = [
       { 
         id: 'sin', 
